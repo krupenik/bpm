@@ -57,9 +57,14 @@
     <script>
         const bpmDisplay = document.getElementById('bpm-display');
         const resetButton = document.getElementById('reset-button');
+        
         let beatHistory = []; // Stores timestamps of beats
+        let inactivityTimer = null;
+        let isActive = false;
 
         const calculateBPM = () => {
+            if (!isActive) return;
+
             const now = Date.now();
             // Filter out beats older than 60 seconds (60000 milliseconds)
             beatHistory = beatHistory.filter(timestamp => now - timestamp < 60000);
@@ -69,18 +74,23 @@
             bpmDisplay.textContent = bpm;
         };
 
-        const recordBeat = () => {
+        const handleBeat = () => {
+            isActive = true;
+            clearTimeout(inactivityTimer);
             beatHistory.push(Date.now());
             calculateBPM(); // Update BPM immediately after a beat
+            inactivityTimer = setTimeout(resetBPM, 5000); // Reset after 5 seconds of inactivity
         };
 
         const resetBPM = () => {
+            clearTimeout(inactivityTimer);
+            isActive = false;
             beatHistory = [];
             bpmDisplay.textContent = '0';
         };
 
         // Event listeners for beats
-        document.body.addEventListener('click', recordBeat);
+        document.body.addEventListener('click', handleBeat);
         document.body.addEventListener('keydown', (event) => {
             // Prevent modifier keys from registering as beats
             if (event.key === 'Shift' || event.key === 'Control' || event.key === 'Alt' || event.key === 'Meta') {
@@ -91,7 +101,7 @@
                 resetBPM();
                 event.preventDefault(); // Prevent default browser action for Escape key
             } else {
-                recordBeat();
+                handleBeat();
             }
         });
 
@@ -101,8 +111,8 @@
         // Update BPM every second to account for time passing
         setInterval(calculateBPM, 1000);
 
-        // Initial calculation
-        calculateBPM();
+        // Initial state
+        resetBPM();
     </script>
 </body>
 </html>
