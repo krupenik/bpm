@@ -168,7 +168,12 @@
         };
 
         // Event listeners for beats
-        document.body.addEventListener('click', handleBeat);
+        document.body.addEventListener('click', (event) => {
+            if (event.target === resetButton) {
+                return; // Ignore clicks on the reset button
+            }
+            handleBeat();
+        });
         document.body.addEventListener('keydown', (event) => {
             // Prevent modifier keys from registering as beats
             if (event.key === 'Shift' || event.key === 'Control' || event.key === 'Alt' || event.key === 'Meta') {
