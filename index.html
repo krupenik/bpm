@@ -66,12 +66,33 @@
             if (!isActive) return;
 
             const now = Date.now();
-            // Filter out beats older than 60 seconds (60000 milliseconds)
             beatHistory = beatHistory.filter(timestamp => now - timestamp < 60000);
             
-            // BPM is simply the count of beats in the last minute
-            const bpm = beatHistory.length;
-            bpmDisplay.textContent = bpm;
+            let bpm = 0;
+            if (beatHistory.length >= 2) {
+                // Use the last few beats for a more responsive BPM calculation
+                // Consider up to the last 5 beats for interval calculation
+                const relevantBeats = beatHistory.slice(-Math.min(beatHistory.length, 5)); 
+                
+                const firstBeatTime = relevantBeats[0];
+                const lastBeatTime = relevantBeats[relevantBeats.length - 1];
+                const timeDifferenceMs = lastBeatTime - firstBeatTime;
+
+                if (timeDifferenceMs > 0) {
+                    // Calculate BPM based on the average interval of the relevant beats
+                    // (number of intervals) / (time difference in seconds) * 60
+                    bpm = ((relevantBeats.length - 1) / (timeDifferenceMs / 1000)) * 60;
+                } else {
+                    // If all relevant beats happened at the exact same timestamp (e.g., very rapid clicks),
+                    // fall back to simple count.
+                    bpm = beatHistory.length;
+                }
+            } else {
+                // If less than 2 beats, BPM is simply the count of beats in the last minute
+                bpm = beatHistory.length;
+            }
+            
+            bpmDisplay.textContent = Math.round(bpm); // Round to nearest whole number
         };
 
         const handleBeat = () => {
