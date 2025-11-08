@@ -1,436 +1,278 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BPM Counter</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            margin: 0;
-            background-color: #f0f0f0;
-            color: #333;
-            user-select: none; /* Prevent text selection on rapid clicks */
-            height: 100vh;
-            width: 100vw;
-            overflow: hidden;
-        }
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>BPM Counter</title>
+        <style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+                margin: 0;
+                background-color: #f0f0f0;
+                color: #333;
+                user-select: none; /* Prevent text selection on rapid clicks */
+                height: 100vh;
+                width: 100vw;
+                overflow: hidden;
+            }
 
-        .container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100%;
-            width: 100%;
-            padding: 1rem;
-            box-sizing: border-box;
-        }
+            .container {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100%;
+                width: 100%;
+                padding: 1rem;
+                box-sizing: border-box;
+            }
 
-        #debug-log {
-            width: 350px;
-            height: 90vh;
-            background: #e9e9e9;
-            border-radius: 0.5rem;
-            font-family: "SF Mono", "Fira Code", "Courier New", monospace;
-            font-size: 0.85rem;
-            margin-right: 2rem;
-            border: 1px solid #ddd;
-            display: flex;
-            flex-direction: column;
-        }
+            #debug-log {
+                width: 350px;
+                height: 90vh;
+                background: #e9e9e9;
+                border-radius: 0.5rem;
+                font-family: "SF Mono", "Fira Code", "Courier New", monospace;
+                font-size: 0.85rem;
+                margin-right: 2rem;
+                border: 1px solid #ddd;
+                display: flex;
+                flex-direction: column;
+            }
 
-        #debug-stats {
-            padding: 0.75rem;
-            border-bottom: 2px solid #ccc;
-            flex-shrink: 0;
-        }
+            #debug-stats {
+                padding: 0.75rem;
+                border-bottom: 2px solid #ccc;
+                flex-shrink: 0;
+                white-space: pre-wrap;
+            }
 
-        #log-entries {
-            padding: 0 1rem 1rem 1rem;
-            overflow-y: auto;
-            flex-grow: 1;
-        }
+            #log-entries {
+                padding: 0 1rem 1rem 1rem;
+                overflow-y: auto;
+                flex-grow: 1;
+                white-space: pre-wrap;
+            }
 
-        .log-entry {
-            padding: 2px 0;
-            border-bottom: 1px solid #ddd;
-        }
+            .log-entry {
+                padding: 2px 0;
+                border-bottom: 1px solid #ddd;
+            }
 
-        .main-content {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
+            .main-content {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+            }
 
-        .jumbotron {
-            font-size: 10vw; /* Responsive font size */
-            font-weight: bold;
-            margin-bottom: 2rem;
-            padding: 1rem 2rem;
-            background-color: #fff;
-            border-radius: 0.5rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            min-width: 300px;
-            text-align: center;
-        }
+            .jumbotron {
+                font-size: 10vw; /* Responsive font size */
+                font-weight: bold;
+                margin-bottom: 2rem;
+                padding: 1rem 2rem;
+                background-color: #fff;
+                border-radius: 0.5rem;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                min-width: 300px;
+                text-align: center;
+            }
 
-        .reset-button {
-            padding: 0.75rem 1.5rem;
-            font-size: 1.25rem;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 0.3rem;
-            cursor: pointer;
-            transition: background-color 0.2s ease-in-out;
-        }
+            .reset-button {
+                padding: 0.75rem 1.5rem;
+                font-size: 1.25rem;
+                background-color: #007bff;
+                color: white;
+                border: none;
+                border-radius: 0.3rem;
+                cursor: pointer;
+                transition: background-color 0.2s ease-in-out;
+            }
 
-        .reset-button:hover {
-            background-color: #0056b3;
-        }
+            .reset-button:hover {
+                background-color: #0056b3;
+            }
 
-        .reset-button:active {
-            background-color: #004085;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div id="debug-log">
-            <div id="debug-stats"></div>
-            <div id="log-entries"></div>
-        </div>
-        <div class="main-content">
-            <div class="instructions" style="margin-bottom: 1rem; font-size: 1.1rem; color: #555; text-align: center;">
-                Tap or press any key to start counting BPM. Press 'Escape' or click 'Reset' to clear.
+            .reset-button:active {
+                background-color: #004085;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div id="debug-log">
+                <div id="debug-stats"></div>
+                <div id="log-entries"></div>
             </div>
-            <div id="bpm-display" class="jumbotron">0</div>
-            <button id="reset-button" class="reset-button">Reset</button>
+            <div class="main-content">
+                <div class="instructions" style="margin-bottom: 1rem; font-size: 1.1rem; color: #555; text-align: center">
+                    Tap or press any key to start counting BPM. Press 'Escape' or click 'Reset' to clear.
+                </div>
+                <div id="bpm-display" class="jumbotron">0</div>
+                <button id="reset-button" class="reset-button">Reset</button>
+            </div>
         </div>
-    </div>
 
-                <script>
-
-                    const bpmDisplay = document.getElementById('bpm-display');
-
-                    const resetButton = document.getElementById('reset-button');
-
-                    const debugStats = document.getElementById('debug-stats');
-
-                    const logEntries = document.getElementById('log-entries');
-
-                    
-
-                    // --- STATE ---
-
-                    let beatHistory = []; // Stores { timestamp: number, delta: number }
-
-                    let inactivityTimer = null;
-
-                    let isActive = false;
-
-            
-
-                    // --- CALCULATION LOGIC ---
-
-            
-
-                    /**
-
-                     * A pure function to calculate all statistics from a given history.
-
-                     * @param {Array<Object>} history The beat history to analyze.
-
-                     * @returns {Object} An object containing all calculated stats.
-
-                     */
-
-                    const calculateStats = (history) => {
-
-                        const deltas = history.map(beat => beat.delta).filter(delta => delta > 0);
-
-                        
-
-                        let bpm = 0, mean = 0, stddev = 0, within1Sigma = 0, within2Sigma = 0;
-
-            
-
-                        if (deltas.length > 0) {
-
-                            mean = deltas.reduce((a, b) => a + b, 0) / deltas.length;
-
-                            if (mean > 0) {
-
-                                bpm = (1000 / mean) * 60;
-
-                            }
-
-            
-
-                            if (deltas.length > 1) {
-
-                                const variance = deltas.map(d => Math.pow(d - mean, 2)).reduce((a, b) => a + b, 0) / deltas.length;
-
-                                stddev = Math.sqrt(variance);
-
-            
-
-                                const lower1Sigma = mean - stddev;
-
-                                const upper1Sigma = mean + stddev;
-
-                                const lower2Sigma = mean - (2 * stddev);
-
-                                const upper2Sigma = mean + (2 * stddev);
-
-            
-
-                                deltas.forEach(d => {
-
-                                    if (d >= lower1Sigma && d <= upper1Sigma) within1Sigma++;
-
-                                    if (d >= lower2Sigma && d <= upper2Sigma) within2Sigma++;
-
-                                });
-
-                            } else {
-
-                                // If only one delta, it's perfectly consistent.
-
-                                within1Sigma = 1;
-
-                                within2Sigma = 1;
-
-                            }
-
-                        }
-
-            
-
-                        return {
-
-                            beats: history.length,
-
-                            deltas,
-
-                            bpm,
-
-                            mean,
-
-                            stddev,
-
-                            within1Sigma,
-
-                            within2Sigma,
-
-                        };
-
-                    };
-
-            
-
-                    // --- VIEW / RENDER LOGIC ---
-
-            
-
-                    /**
-
-                     * Updates all DOM elements based on the current state.
-
-                     */
-
-                    const updateAllViews = () => {
-
-                        // Filter out beats older than 60 seconds before calculating.
-
-                        const now = Date.now();
-
-                        beatHistory = beatHistory.filter(beat => now - beat.timestamp < 60000);
-
-            
-
-                        const stats = calculateStats(beatHistory);
-
-            
-
-                        // 1. Update BPM Display
-
-                        bpmDisplay.textContent = Math.round(stats.bpm);
-
-            
-
-                        // 2. Update Stats View
-
-                        const statsText = `Beats:  ${stats.beats}
-
-            Mean:   ${stats.mean.toFixed(2)}ms
-
-            StdDev: ${stats.stddev.toFixed(2)}ms
-
-            1σ:     ${stats.within1Sigma} (${(stats.deltas.length > 0 ? (stats.within1Sigma / stats.deltas.length * 100) : 0).toFixed(1)}%)
-
-            2σ:     ${stats.within2Sigma} (${(stats.deltas.length > 0 ? (stats.within2Sigma / stats.deltas.length * 100) : 0).toFixed(1)}%)`;
-
-                        debugStats.textContent = statsText;
-
-            
-
-                        // 3. Update Log View
-
-                        const logText = beatHistory.slice().reverse().map(beat => {
-
-                            const deltaText = beat.delta > 0 ? `+${beat.delta}ms` : 'N/A';
-
-                            return `TS: ${beat.timestamp} | Δ: ${deltaText}`;
-
-                        }).join('\n');
-
-                        logEntries.textContent = logText;
-
-                    };
-
-            
-
-                    // --- STATE TRANSITIONS & EVENT HANDLERS ---
-
-            
-
-                    /**
-
-                     * Transitions the app to an idle state, freezing the display.
-
-                     */
-
-                    const goToIdleState = () => {
-
-                        clearTimeout(inactivityTimer);
-
-                        isActive = false;
-
-                    };
-
-            
-
-                    /**
-
-                     * Performs a hard reset, clearing all data and returning to a blank idle state.
-
-                     */
-
-                    const hardReset = () => {
-
-                        clearTimeout(inactivityTimer);
-
-                        isActive = false;
-
-                        beatHistory = [];
-
-                        updateAllViews();
-
-                        resetButton.blur();
-
-                    };
-
-            
-
-                    /**
-
-                     * Handles a single beat event. If idle, starts a new session.
-
-                     */
-
-                    const handleBeat = () => {
-
-                        if (!isActive) {
-
-                            isActive = true;
-
-                            beatHistory = []; // Start new session with a blank slate
-
-                        }
-
-            
-
-                        clearTimeout(inactivityTimer);
-
-                        inactivityTimer = setTimeout(goToIdleState, 5000);
-
-            
-
-                        const now = Date.now();
-
-                        const lastBeat = beatHistory.length > 0 ? beatHistory[beatHistory.length - 1] : null;
-
-                        const delta = lastBeat ? now - lastBeat.timestamp : 0;
-
-                        beatHistory.push({ timestamp: now, delta: delta });
-
-            
-
-                        updateAllViews();
-
-                    };
-
-            
-
-                    // --- EVENT LISTENERS ---
-
-            
-
-                    document.body.addEventListener('click', (event) => {
-
-                        if (event.target === resetButton) return;
-
-                        handleBeat();
-
-                    });
-
-            
-
-                    document.body.addEventListener('keydown', (event) => {
-
-                        if (event.key === 'Shift' || event.key === 'Control' || event.key === 'Alt' || event.key === 'Meta') return;
-
-                        
-
-                        if (event.key === 'Escape') {
-
-                            hardReset();
-
-                            event.preventDefault();
-
-                        } else {
-
-                            handleBeat();
-
-                        }
-
-                    });
-
-            
-
-                    resetButton.addEventListener('click', hardReset);
-
-            
-
-                    // Periodically update to account for expired beats from the 60s buffer.
-
-                    setInterval(() => {
-
-                        if (isActive) {
-
-                            updateAllViews();
-
-                        }
-
-                    }, 1000);
-
-            
-
-                    // --- INITIALIZATION ---
-
-                    hardReset(); // Start in a clean, idle state.
-
-                </script></body>
+        <script>
+            const bpmDisplay = document.getElementById("bpm-display");
+            const resetButton = document.getElementById("reset-button");
+            const debugStats = document.getElementById("debug-stats");
+            const logEntries = document.getElementById("log-entries");
+
+            // --- STATE ---
+            let beatHistory = []; // Stores { timestamp: number, delta: number }
+            let inactivityTimer = null;
+            let isActive = false;
+
+            // --- CALCULATION LOGIC ---
+
+            /**
+             * A pure function to calculate all statistics from a given history.
+             * @param {Array<Object>} history The beat history to analyze.
+             * @returns {Object} An object containing all calculated stats.
+             */
+            const calculateStats = (history) => {
+                const deltas = history.map((beat) => beat.delta).filter((delta) => delta > 0);
+
+                let bpm = 0, mean = 0, stddev = 0, within1Sigma = 0, within2Sigma = 0;
+
+                if (deltas.length > 0) {
+                    mean = deltas.reduce((a, b) => a + b, 0) / deltas.length;
+                    if (mean > 0) {
+                        bpm = (1000 / mean) * 60;
+                    }
+
+                    if (deltas.length > 1) {
+                        const variance = deltas.map((d) => Math.pow(d - mean, 2)).reduce((a, b) => a + b, 0) / deltas.length;
+                        stddev = Math.sqrt(variance);
+
+                        const lower1Sigma = mean - stddev;
+                        const upper1Sigma = mean + stddev;
+                        const lower2Sigma = mean - 2 * stddev;
+                        const upper2Sigma = mean + 2 * stddev;
+
+                        deltas.forEach((d) => {
+                            if (d >= lower1Sigma && d <= upper1Sigma) within1Sigma++;
+                            if (d >= lower2Sigma && d <= upper2Sigma) within2Sigma++;
+                        });
+                    } else {
+                        // If only one delta, it's perfectly consistent.
+                        within1Sigma = 1;
+                        within2Sigma = 1;
+                    }
+                }
+
+                return {
+                    beats: history.length,
+                    deltas,
+                    bpm,
+                    mean,
+                    stddev,
+                    within1Sigma,
+                    within2Sigma,
+                };
+            };
+
+            // --- VIEW / RENDER LOGIC ---
+
+            /**
+             * Updates all DOM elements based on the current state.
+             */
+            const updateAllViews = () => {
+                // Filter out beats older than 60 seconds before calculating.
+                const now = Date.now();
+                beatHistory = beatHistory.filter((beat) => now - beat.timestamp < 60000);
+
+                const stats = calculateStats(beatHistory);
+
+                // 1. Update BPM Display
+                bpmDisplay.textContent = Math.round(stats.bpm);
+
+                // 2. Update Stats View
+                const statsText = `Beats:  ${stats.beats}
+Mean:   ${stats.mean.toFixed(2)}ms
+StdDev: ${stats.stddev.toFixed(2)}ms
+1σ:     ${stats.within1Sigma} (${(stats.deltas.length > 0 ? (stats.within1Sigma / stats.deltas.length) * 100 : 0).toFixed(1)}%)
+2σ:     ${stats.within2Sigma} (${(stats.deltas.length > 0 ? (stats.within2Sigma / stats.deltas.length) * 100 : 0).toFixed(1)}%)`;
+                debugStats.textContent = statsText;
+
+                // 3. Update Log View
+                const logText = beatHistory.slice().reverse().map((beat) => {
+                    const deltaText = beat.delta > 0 ? `+${beat.delta}ms` : "N/A";
+                    return `TS: ${beat.timestamp} | Δ: ${deltaText}`;
+                }).join("\n");
+                logEntries.textContent = logText;
+            };
+
+            // --- STATE TRANSITIONS & EVENT HANDLERS ---
+
+            /**
+             * Transitions the app to an idle state, freezing the display.
+             */
+            const goToIdleState = () => {
+                clearTimeout(inactivityTimer);
+                isActive = false;
+            };
+
+            /**
+             * Performs a hard reset, clearing all data and returning to a blank idle state.
+             */
+            const hardReset = () => {
+                clearTimeout(inactivityTimer);
+                isActive = false;
+                beatHistory = [];
+                updateAllViews();
+                resetButton.blur();
+            };
+
+            /**
+             * Handles a single beat event. If idle, starts a new session.
+             */
+            const handleBeat = () => {
+                if (!isActive) {
+                    isActive = true;
+                    beatHistory = []; // Start new session with a blank slate
+                }
+
+                clearTimeout(inactivityTimer);
+                inactivityTimer = setTimeout(goToIdleState, 5000);
+
+                const now = Date.now();
+                const lastBeat = beatHistory.length > 0 ? beatHistory[beatHistory.length - 1] : null;
+                const delta = lastBeat ? now - lastBeat.timestamp : 0;
+                beatHistory.push({ timestamp: now, delta: delta });
+
+                updateAllViews();
+            };
+
+            // --- EVENT LISTENERS ---
+
+            document.body.addEventListener("click", (event) => {
+                if (event.target === resetButton) return;
+                handleBeat();
+            });
+
+            document.body.addEventListener("keydown", (event) => {
+                if (event.key === "Shift" || event.key === "Control" || event.key === "Alt" || event.key === "Meta") return;
+
+                if (event.key === "Escape") {
+                    hardReset();
+                    event.preventDefault();
+                } else {
+                    handleBeat();
+                }
+            });
+
+            resetButton.addEventListener("click", hardReset);
+
+            // Periodically update to account for expired beats from the 60s buffer.
+            setInterval(() => {
+                if (isActive) {
+                    updateAllViews();
+                }
+            }, 1000);
+
+            // --- INITIALIZATION ---
+            hardReset(); // Start in a clean, idle state.
+        </script>
+    </body>
 </html>
