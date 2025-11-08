@@ -82,6 +82,11 @@
         // Event listeners for beats
         document.body.addEventListener('click', recordBeat);
         document.body.addEventListener('keydown', (event) => {
+            // Prevent modifier keys from registering as beats
+            if (event.key === 'Shift' || event.key === 'Control' || event.key === 'Alt' || event.key === 'Meta') {
+                return;
+            }
+
             if (event.key === 'Escape') {
                 resetBPM();
                 event.preventDefault(); // Prevent default browser action for Escape key
