@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BPM Counter</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            color: #333;
+            user-select: none; /* Prevent text selection on rapid clicks */
+        }
+
+        .jumbotron {
+            font-size: 10vw; /* Responsive font size */
+            font-weight: bold;
+            margin-bottom: 2rem;
+            padding: 1rem 2rem;
+            background-color: #fff;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            min-width: 300px;
+            text-align: center;
+        }
+
+        .reset-button {
+            padding: 0.75rem 1.5rem;
+            font-size: 1.25rem;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 0.3rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+        }
+
+        .reset-button:hover {
+            background-color: #0056b3;
+        }
+
+        .reset-button:active {
+            background-color: #004085;
+        }
+    </style>
+</head>
+<body>
+    <div id="bpm-display" class="jumbotron">0</div>
+    <button id="reset-button" class="reset-button">Reset</button>
+
+    <script>
+        const bpmDisplay = document.getElementById('bpm-display');
+        const resetButton = document.getElementById('reset-button');
+        let beatHistory = []; // Stores timestamps of beats
+
+        const calculateBPM = () => {
+            const now = Date.now();
+            // Filter out beats older than 60 seconds (60000 milliseconds)
+            beatHistory = beatHistory.filter(timestamp => now - timestamp < 60000);
+            
+            // BPM is simply the count of beats in the last minute
+            const bpm = beatHistory.length;
+            bpmDisplay.textContent = bpm;
+        };
+
+        const recordBeat = () => {
+            beatHistory.push(Date.now());
+            calculateBPM(); // Update BPM immediately after a beat
+        };
+
+        const resetBPM = () => {
+            beatHistory = [];
+            bpmDisplay.textContent = '0';
+        };
+
+        // Event listeners for beats
+        document.body.addEventListener('click', recordBeat);
+        document.body.addEventListener('keydown', recordBeat);
+
+        // Event listener for reset button
+        resetButton.addEventListener('click', resetBPM);
+
+        // Update BPM every second to account for time passing
+        setInterval(calculateBPM, 1000);
+
+        // Initial calculation
+        calculateBPM();
+    </script>
+</body>
+</html>
