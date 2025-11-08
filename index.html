@@ -107,8 +107,8 @@
 
         const updateDebugLog = () => {
             debugLog.innerHTML = '';
-            const recentBeats = beatHistory.slice(-20).reverse(); // Newest first
-            recentBeats.forEach(beat => {
+            const allBeats = beatHistory.slice().reverse(); // Create a shallow copy and reverse for newest first
+            allBeats.forEach(beat => {
                 const logEntry = document.createElement('div');
                 logEntry.className = 'log-entry';
                 const deltaText = beat.delta > 0 ? `+${beat.delta}ms` : 'N/A';
