@@ -142,71 +142,117 @@
 
                  */
 
-                const updateAllViews = () => {
+                        const updateAllViews = () => {
 
-                    const deltas = beatHistory.map(beat => beat.delta).filter(delta => delta > 0);
+                            const deltas = beatHistory.map(beat => beat.delta).filter(delta => delta > 0);
 
-                    
+                            
 
-                    // 1. Calculate BPM
+                            // 1. Calculate BPM
 
-                    let bpm = 0;
+                            let bpm = 0;
 
-                    if (deltas.length > 0) {
+                            if (deltas.length > 0) {
 
-                        const meanDelta = deltas.reduce((a, b) => a + b, 0) / deltas.length;
+                                const meanDelta = deltas.reduce((a, b) => a + b, 0) / deltas.length;
 
-                        if (meanDelta > 0) {
+                                if (meanDelta > 0) {
 
-                            bpm = (1000 / meanDelta) * 60;
+                                    bpm = (1000 / meanDelta) * 60;
 
-                        }
+                                }
 
-                    }
+                            }
 
-                    bpmDisplay.textContent = Math.round(bpm);
+                            bpmDisplay.textContent = Math.round(bpm);
 
-        
+                
 
-                    // 2. Update Stats View
+                            // 2. Update Stats View
 
-                    let mean = 0;
+                            let mean = 0;
 
-                    let stddev = 0;
+                            let stddev = 0;
 
-                    if (deltas.length > 0) {
+                            let within1Sigma = 0;
 
-                        mean = deltas.reduce((a, b) => a + b, 0) / deltas.length;
+                            let within2Sigma = 0;
 
-                        if (deltas.length > 1) {
+                
 
-                            const variance = deltas.map(d => Math.pow(d - mean, 2)).reduce((a, b) => a + b, 0) / deltas.length;
+                            if (deltas.length > 0) {
 
-                            stddev = Math.sqrt(variance);
+                                mean = deltas.reduce((a, b) => a + b, 0) / deltas.length;
 
-                        }
+                                if (deltas.length > 1) {
 
-                    }
+                                    const variance = deltas.map(d => Math.pow(d - mean, 2)).reduce((a, b) => a + b, 0) / deltas.length;
 
-                    const statsText = `Beats:  ${beatHistory.length}\nMean:   ${mean.toFixed(2)}ms\nStdDev: ${stddev.toFixed(2)}ms`;
+                                    stddev = Math.sqrt(variance);
 
-                    debugStats.textContent = statsText;
+                                }
 
-        
+                
 
-                    // 3. Update Log View
+                                // Calculate within 1 and 2 sigma
 
-                    const logText = beatHistory.slice().reverse().map(beat => {
+                                const lower1Sigma = mean - stddev;
 
-                        const deltaText = beat.delta > 0 ? `+${beat.delta}ms` : 'N/A';
+                                const upper1Sigma = mean + stddev;
 
-                        return `TS: ${beat.timestamp} | Δ: ${deltaText}`;
+                                const lower2Sigma = mean - (2 * stddev);
 
-                    }).join('\n');
+                                const upper2Sigma = mean + (2 * stddev);
 
-                    logEntries.textContent = logText;
+                
 
-                };
+                                deltas.forEach(d => {
+
+                                    if (d >= lower1Sigma && d <= upper1Sigma) {
+
+                                        within1Sigma++;
+
+                                    }
+
+                                    if (d >= lower2Sigma && d <= upper2Sigma) {
+
+                                        within2Sigma++;
+
+                                    }
+
+                                });
+
+                            }
+
+                
+
+                            const statsText = `Beats:  ${beatHistory.length}
+
+                Mean:   ${mean.toFixed(2)}ms
+
+                StdDev: ${stddev.toFixed(2)}ms
+
+                1σ:     ${within1Sigma} (${(deltas.length > 0 ? (within1Sigma / deltas.length * 100) : 0).toFixed(1)}%)
+
+                2σ:     ${within2Sigma} (${(deltas.length > 0 ? (within2Sigma / deltas.length * 100) : 0).toFixed(1)}%)`;
+
+                            debugStats.textContent = statsText;
+
+                
+
+                            // 3. Update Log View
+
+                            const logText = beatHistory.slice().reverse().map(beat => {
+
+                                const deltaText = beat.delta > 0 ? `+${beat.delta}ms` : 'N/A';
+
+                                return `TS: ${beat.timestamp} | Δ: ${deltaText}`;
+
+                            }).join('\n');
+
+                            logEntries.textContent = logText;
+
+                        };
 
         
 
