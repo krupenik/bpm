@@ -164,18 +164,19 @@
             const lastGapIndex = beatHistory.map(b => b.delta).lastIndexOf(0);
             const beatsSinceGap = lastGapIndex !== -1 ? beatHistory.slice(lastGapIndex) : beatHistory;
 
-            if (beatsSinceGap.length >= 2) {
-                const relevantBeats = beatsSinceGap.slice(-Math.min(beatsSinceGap.length, 5)); 
-                const firstBeatTime = relevantBeats[0].timestamp;
-                const lastBeatTime = relevantBeats[relevantBeats.length - 1].timestamp;
-                const timeDifferenceMs = lastBeatTime - firstBeatTime;
+            // Get the deltas from the current tapping session
+            const deltasSinceGap = beatsSinceGap.map(beat => beat.delta).filter(delta => delta > 0);
 
-                if (timeDifferenceMs > 0) {
-                    bpm = ((relevantBeats.length - 1) / (timeDifferenceMs / 1000)) * 60;
+            if (deltasSinceGap.length > 0) {
+                // Calculate BPM based on the mean of the deltas
+                const meanDelta = deltasSinceGap.reduce((a, b) => a + b, 0) / deltasSinceGap.length;
+                if (meanDelta > 0) {
+                    bpm = (1000 / meanDelta) * 60;
                 } else {
-                    bpm = beatsSinceGap.length;
+                    bpm = beatsSinceGap.length; // Fallback for edge cases
                 }
             } else {
+                // If no valid deltas, BPM is the number of beats in this session
                 bpm = beatsSinceGap.length;
             }
             
