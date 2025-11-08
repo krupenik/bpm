@@ -81,7 +81,14 @@
 
         // Event listeners for beats
         document.body.addEventListener('click', recordBeat);
-        document.body.addEventListener('keydown', recordBeat);
+        document.body.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                resetBPM();
+                event.preventDefault(); // Prevent default browser action for Escape key
+            } else {
+                recordBeat();
+            }
+        });
 
         // Event listener for reset button
         resetButton.addEventListener('click', resetBPM);
