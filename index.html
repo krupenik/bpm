@@ -119,17 +119,20 @@
         let beatHistory = []; // Stores { timestamp: number, delta: number }
         let inactivityTimer = null;
         let isActive = false;
+        let isGap = true; // Start in a gap state
 
         const updateDebugView = () => {
             // Update Stats
-            const deltas = beatHistory.map(beat => beat.delta).slice(1); // All deltas, excluding the first beat's 0
+            const deltas = beatHistory.map(beat => beat.delta).filter(delta => delta > 0); // Valid deltas only
             let mean = 0;
             let stddev = 0;
 
             if (deltas.length > 0) {
                 mean = deltas.reduce((a, b) => a + b, 0) / deltas.length;
-                const variance = deltas.map(d => Math.pow(d - mean, 2)).reduce((a, b) => a + b, 0) / deltas.length;
-                stddev = Math.sqrt(variance);
+                if (deltas.length > 1) {
+                    const variance = deltas.map(d => Math.pow(d - mean, 2)).reduce((a, b) => a + b, 0) / deltas.length;
+                    stddev = Math.sqrt(variance);
+                }
             }
 
             debugStats.innerHTML = `
@@ -157,8 +160,12 @@
             beatHistory = beatHistory.filter(beat => now - beat.timestamp < 60000);
             
             let bpm = 0;
-            if (beatHistory.length >= 2) {
-                const relevantBeats = beatHistory.slice(-Math.min(beatHistory.length, 5)); 
+            // Find the last gap (beat with delta 0)
+            const lastGapIndex = beatHistory.map(b => b.delta).lastIndexOf(0);
+            const beatsSinceGap = lastGapIndex !== -1 ? beatHistory.slice(lastGapIndex) : beatHistory;
+
+            if (beatsSinceGap.length >= 2) {
+                const relevantBeats = beatsSinceGap.slice(-Math.min(beatsSinceGap.length, 5)); 
                 const firstBeatTime = relevantBeats[0].timestamp;
                 const lastBeatTime = relevantBeats[relevantBeats.length - 1].timestamp;
                 const timeDifferenceMs = lastBeatTime - firstBeatTime;
@@ -166,14 +173,20 @@
                 if (timeDifferenceMs > 0) {
                     bpm = ((relevantBeats.length - 1) / (timeDifferenceMs / 1000)) * 60;
                 } else {
-                    bpm = beatHistory.length;
+                    bpm = beatsSinceGap.length;
                 }
             } else {
-                bpm = beatHistory.length;
+                bpm = beatsSinceGap.length;
             }
             
             bpmDisplay.textContent = Math.round(bpm);
             updateDebugView(); // Also update view when beats expire
+        };
+
+        const handleInactivity = () => {
+            isActive = false;
+            isGap = true;
+            bpmDisplay.textContent = '0';
         };
 
         const handleBeat = () => {
@@ -181,19 +194,21 @@
             clearTimeout(inactivityTimer);
 
             const now = Date.now();
-            const lastBeat = beatHistory.length > 0 ? beatHistory[beatHistory.length - 1] : null;
+            const lastBeat = !isGap && beatHistory.length > 0 ? beatHistory[beatHistory.length - 1] : null;
             const delta = lastBeat ? now - lastBeat.timestamp : 0;
             
+            isGap = false; // No longer in a gap
             beatHistory.push({ timestamp: now, delta: delta });
 
             calculateBPM(); // Update BPM immediately after a beat
             updateDebugView();
-            inactivityTimer = setTimeout(resetBPM, 5000);
+            inactivityTimer = setTimeout(handleInactivity, 5000);
         };
 
         const resetBPM = () => {
             clearTimeout(inactivityTimer);
             isActive = false;
+            isGap = true;
             beatHistory = [];
             bpmDisplay.textContent = '0';
             updateDebugView();
