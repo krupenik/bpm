@@ -29,15 +29,26 @@
         #debug-log {
             width: 350px;
             height: 90vh;
-            overflow-y: auto;
             background: #e9e9e9;
             border-radius: 0.5rem;
-            padding: 1rem;
-            box-sizing: border-box;
             font-family: "SF Mono", "Fira Code", "Courier New", monospace;
             font-size: 0.85rem;
             margin-right: 2rem;
             border: 1px solid #ddd;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #debug-stats {
+            padding: 0.75rem;
+            border-bottom: 2px solid #ccc;
+            flex-shrink: 0;
+        }
+
+        #log-entries {
+            padding: 0 1rem 1rem 1rem;
+            overflow-y: auto;
+            flex-grow: 1;
         }
 
         .log-entry {
@@ -86,7 +97,10 @@
 </head>
 <body>
     <div class="container">
-        <div id="debug-log"></div>
+        <div id="debug-log">
+            <div id="debug-stats"></div>
+            <div id="log-entries"></div>
+        </div>
         <div class="main-content">
             <div class="instructions" style="margin-bottom: 1rem; font-size: 1.1rem; color: #555; text-align: center;">
                 Tap or press any key to start counting BPM. Press 'Escape' or click 'Reset' to clear.
@@ -99,21 +113,40 @@
     <script>
         const bpmDisplay = document.getElementById('bpm-display');
         const resetButton = document.getElementById('reset-button');
-        const debugLog = document.getElementById('debug-log');
+        const debugStats = document.getElementById('debug-stats');
+        const logEntries = document.getElementById('log-entries');
         
         let beatHistory = []; // Stores { timestamp: number, delta: number }
         let inactivityTimer = null;
         let isActive = false;
 
-        const updateDebugLog = () => {
-            debugLog.innerHTML = '';
-            const allBeats = beatHistory.slice().reverse(); // Create a shallow copy and reverse for newest first
+        const updateDebugView = () => {
+            // Update Stats
+            const deltas = beatHistory.map(beat => beat.delta).slice(1); // All deltas, excluding the first beat's 0
+            let mean = 0;
+            let stddev = 0;
+
+            if (deltas.length > 0) {
+                mean = deltas.reduce((a, b) => a + b, 0) / deltas.length;
+                const variance = deltas.map(d => Math.pow(d - mean, 2)).reduce((a, b) => a + b, 0) / deltas.length;
+                stddev = Math.sqrt(variance);
+            }
+
+            debugStats.innerHTML = `
+                <div><strong>Beats:</strong> ${beatHistory.length}</div>
+                <div><strong>Mean:</strong> ${mean.toFixed(2)}ms</div>
+                <div><strong>StdDev:</strong> ${stddev.toFixed(2)}ms</div>
+            `;
+
+            // Update Log
+            logEntries.innerHTML = '';
+            const allBeats = beatHistory.slice().reverse(); // Newest first
             allBeats.forEach(beat => {
                 const logEntry = document.createElement('div');
                 logEntry.className = 'log-entry';
                 const deltaText = beat.delta > 0 ? `+${beat.delta}ms` : 'N/A';
                 logEntry.textContent = `TS: ${beat.timestamp} | Δ: ${deltaText}`;
-                debugLog.appendChild(logEntry);
+                logEntries.appendChild(logEntry);
             });
         };
 
@@ -140,7 +173,7 @@
             }
             
             bpmDisplay.textContent = Math.round(bpm);
-            updateDebugLog(); // Also update log when beats expire
+            updateDebugView(); // Also update view when beats expire
         };
 
         const handleBeat = () => {
@@ -154,7 +187,7 @@
             beatHistory.push({ timestamp: now, delta: delta });
 
             calculateBPM(); // Update BPM immediately after a beat
-            updateDebugLog();
+            updateDebugView();
             inactivityTimer = setTimeout(resetBPM, 5000);
         };
 
@@ -163,10 +196,10 @@
             isActive = false;
             beatHistory = [];
             bpmDisplay.textContent = '0';
-            updateDebugLog();
+            updateDebugView();
             resetButton.blur(); // Remove focus from the button
         };
-
+        
         // Event listeners for beats
         document.body.addEventListener('click', (event) => {
             if (event.target === resetButton) {
@@ -175,7 +208,6 @@
             handleBeat();
         });
         document.body.addEventListener('keydown', (event) => {
-            // Prevent modifier keys from registering as beats
             if (event.key === 'Shift' || event.key === 'Control' || event.key === 'Alt' || event.key === 'Meta') {
                 return;
             }
