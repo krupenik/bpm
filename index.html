@@ -183,11 +183,11 @@
              * Updates all DOM elements based on the current state.
              */
             const updateAllViews = () => {
-                // Filter out beats older than 60 seconds before calculating.
-                const now = Date.now();
-                beatHistory = beatHistory.filter((beat) => now - beat.timestamp < 60000);
-
                 const stats = calculateStats(beatHistory);
+
+                if (stats.bpm > 2) {
+                  beatHistory = beatHistory.slice(-(stats.bpm+1));
+                }
 
                 // 1. Update BPM Display
                 bpmDisplay.textContent = Math.round(stats.bpm);
@@ -196,7 +196,7 @@
                 const statsText = `Beats:  ${stats.beats}
 Mean:   ${stats.mean.toFixed(2)}ms
 StdDev: ${stats.stddev.toFixed(2)}ms
-CoV:    ${stats.coefficientOfVariation.toFixed(2)}
+CoV:    ${(stats.coefficientOfVariation * 100).toFixed(2)}%
 1σ:     ${stats.within1Sigma} (${(stats.deltas.length > 0 ? (stats.within1Sigma / stats.deltas.length) * 100 : 0).toFixed(1)}%)
 2σ:     ${stats.within2Sigma} (${(stats.deltas.length > 0 ? (stats.within2Sigma / stats.deltas.length) * 100 : 0).toFixed(1)}%)`;
                 debugStats.textContent = statsText;
