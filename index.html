@@ -110,120 +110,235 @@
         </div>
     </div>
 
-        <script>
-            const bpmDisplay = document.getElementById('bpm-display');
-            const resetButton = document.getElementById('reset-button');
-            const debugStats = document.getElementById('debug-stats');
-            const logEntries = document.getElementById('log-entries');
-            
-            // --- STATE ---
-            let beatHistory = []; // Stores { timestamp: number, delta: number }
-            let inactivityTimer = null;
-            let isActive = false;
-    
-            // --- CORE FUNCTIONS ---
-    
-            /**
-             * Updates all displays (BPM, stats, and log) based on the current beatHistory.
-             */
-            const updateAllViews = () => {
-                const deltas = beatHistory.map(beat => beat.delta).filter(delta => delta > 0);
+            <script>
+
+                const bpmDisplay = document.getElementById('bpm-display');
+
+                const resetButton = document.getElementById('reset-button');
+
+                const debugStats = document.getElementById('debug-stats');
+
+                const logEntries = document.getElementById('log-entries');
+
                 
-                // 1. Calculate BPM
-                let bpm = 0;
-                if (deltas.length > 0) {
-                    const meanDelta = deltas.reduce((a, b) => a + b, 0) / deltas.length;
-                    if (meanDelta > 0) {
-                        bpm = (1000 / meanDelta) * 60;
+
+                // --- STATE ---
+
+                let beatHistory = []; // Stores { timestamp: number, delta: number }
+
+                let inactivityTimer = null;
+
+                let isActive = false;
+
+        
+
+                // --- CORE FUNCTIONS ---
+
+        
+
+                /**
+
+                 * Updates all displays (BPM, stats, and log) based on the current beatHistory.
+
+                 */
+
+                const updateAllViews = () => {
+
+                    const deltas = beatHistory.map(beat => beat.delta).filter(delta => delta > 0);
+
+                    
+
+                    // 1. Calculate BPM
+
+                    let bpm = 0;
+
+                    if (deltas.length > 0) {
+
+                        const meanDelta = deltas.reduce((a, b) => a + b, 0) / deltas.length;
+
+                        if (meanDelta > 0) {
+
+                            bpm = (1000 / meanDelta) * 60;
+
+                        }
+
                     }
-                }
-                bpmDisplay.textContent = Math.round(bpm);
-    
-                // 2. Update Stats View
-                let mean = 0;
-                let stddev = 0;
-                if (deltas.length > 0) {
-                    mean = deltas.reduce((a, b) => a + b, 0) / deltas.length;
-                    if (deltas.length > 1) {
-                        const variance = deltas.map(d => Math.pow(d - mean, 2)).reduce((a, b) => a + b, 0) / deltas.length;
-                        stddev = Math.sqrt(variance);
+
+                    bpmDisplay.textContent = Math.round(bpm);
+
+        
+
+                    // 2. Update Stats View
+
+                    let mean = 0;
+
+                    let stddev = 0;
+
+                    if (deltas.length > 0) {
+
+                        mean = deltas.reduce((a, b) => a + b, 0) / deltas.length;
+
+                        if (deltas.length > 1) {
+
+                            const variance = deltas.map(d => Math.pow(d - mean, 2)).reduce((a, b) => a + b, 0) / deltas.length;
+
+                            stddev = Math.sqrt(variance);
+
+                        }
+
                     }
-                }
-                const statsText = `Beats:  ${beatHistory.length}\nMean:   ${mean.toFixed(2)}ms\nStdDev: ${stddev.toFixed(2)}ms`;
-                debugStats.textContent = statsText;
-    
-                // 3. Update Log View
-                const logText = beatHistory.slice().reverse().map(beat => {
-                    const deltaText = beat.delta > 0 ? `+${beat.delta}ms` : 'N/A';
-                    return `TS: ${beat.timestamp} | Δ: ${deltaText}`;
-                }).join('\n');
-                logEntries.textContent = logText;
-            };
-    
-            /**
-             * Transitions the app to the Idle state. Clears all data and resets displays.
-             */
-            const resetToIdle = () => {
-                clearTimeout(inactivityTimer);
-                isActive = false;
-                beatHistory = [];
-                updateAllViews(); // This will reset displays to 0
-                resetButton.blur();
-            };
-    
-            /**
-             * Handles a single beat event. Transitions to Active state if idle.
-             */
-            const handleBeat = () => {
-                // If idle, this first tap makes it active.
-                if (!isActive) {
-                    isActive = true;
-                }
-    
-                // Reset the inactivity timer on every beat.
-                clearTimeout(inactivityTimer);
-                inactivityTimer = setTimeout(resetToIdle, 5000);
-    
-                // Record the beat and calculate its delta.
-                const now = Date.now();
-                const lastBeat = beatHistory.length > 0 ? beatHistory[beatHistory.length - 1] : null;
-                const delta = lastBeat ? now - lastBeat.timestamp : 0;
-                beatHistory.push({ timestamp: now, delta: delta });
-    
-                // Update all displays.
-                updateAllViews();
-            };
-    
-            // --- EVENT LISTENERS ---
-    
-            // Listen for clicks on the page body.
-            document.body.addEventListener('click', (event) => {
-                if (event.target === resetButton) {
-                    return; // Clicks on the reset button are handled separately.
-                }
-                handleBeat();
-            });
-    
-            // Listen for key presses.
-            document.body.addEventListener('keydown', (event) => {
-                // Ignore modifier keys.
-                if (event.key === 'Shift' || event.key === 'Control' || event.key === 'Alt' || event.key === 'Meta') {
-                    return;
-                }
-    
-                // Escape key resets to idle.
-                if (event.key === 'Escape') {
-                    resetToIdle();
-                    event.preventDefault();
-                } else {
+
+                    const statsText = `Beats:  ${beatHistory.length}\nMean:   ${mean.toFixed(2)}ms\nStdDev: ${stddev.toFixed(2)}ms`;
+
+                    debugStats.textContent = statsText;
+
+        
+
+                    // 3. Update Log View
+
+                    const logText = beatHistory.slice().reverse().map(beat => {
+
+                        const deltaText = beat.delta > 0 ? `+${beat.delta}ms` : 'N/A';
+
+                        return `TS: ${beat.timestamp} | Δ: ${deltaText}`;
+
+                    }).join('\n');
+
+                    logEntries.textContent = logText;
+
+                };
+
+        
+
+                /**
+
+                 * Transitions the app to an idle state, freezing the display. Does not clear data.
+
+                 */
+
+                const goToIdleState = () => {
+
+                    clearTimeout(inactivityTimer);
+
+                    isActive = false;
+
+                };
+
+        
+
+                /**
+
+                 * Performs a hard reset, clearing all data and returning to a blank idle state.
+
+                 */
+
+                const hardReset = () => {
+
+                    clearTimeout(inactivityTimer);
+
+                    isActive = false;
+
+                    beatHistory = [];
+
+                    updateAllViews();
+
+                    resetButton.blur();
+
+                };
+
+        
+
+                /**
+
+                 * Handles a single beat event. If idle, starts a new session.
+
+                 */
+
+                const handleBeat = () => {
+
+                    // If idle, this first tap starts a new session from a blank slate.
+
+                    if (!isActive) {
+
+                        isActive = true;
+
+                        beatHistory = []; // Start with a blank slate
+
+                    }
+
+        
+
+                    // Reset the inactivity timer on every beat.
+
+                    clearTimeout(inactivityTimer);
+
+                    inactivityTimer = setTimeout(goToIdleState, 5000);
+
+        
+
+                    // Record the beat and calculate its delta.
+
+                    const now = Date.now();
+
+                    const lastBeat = beatHistory.length > 0 ? beatHistory[beatHistory.length - 1] : null;
+
+                    const delta = lastBeat ? now - lastBeat.timestamp : 0;
+
+                    beatHistory.push({ timestamp: now, delta: delta });
+
+        
+
+                    // Update all displays.
+
+                    updateAllViews();
+
+                };
+
+        
+
+                // --- EVENT LISTENERS ---
+
+        
+
+                document.body.addEventListener('click', (event) => {
+
+                    if (event.target === resetButton) return;
+
                     handleBeat();
-                }
-            });
-    
-            // Listen for clicks on the reset button.
-            resetButton.addEventListener('click', resetToIdle);
-    
-            // --- INITIALIZATION ---
-            resetToIdle(); // Start in Idle mode.
-        </script></body>
+
+                });
+
+        
+
+                document.body.addEventListener('keydown', (event) => {
+
+                    if (event.key === 'Shift' || event.key === 'Control' || event.key === 'Alt' || event.key === 'Meta') return;
+
+                    
+
+                    if (event.key === 'Escape') {
+
+                        hardReset();
+
+                        event.preventDefault();
+
+                    } else {
+
+                        handleBeat();
+
+                    }
+
+                });
+
+        
+
+                resetButton.addEventListener('click', hardReset);
+
+        
+
+                // --- INITIALIZATION ---
+
+                hardReset(); // Start in a clean, idle state.
+
+            </script></body>
 </html>
